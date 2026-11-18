@@ -3,17 +3,65 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Block Dodger</title>
-<style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #11141b; }
-  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  /* Read aloud, never shown: the status line screen readers announce. */
-  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-</style>
+<title>NEON TIDE — Palmira Bay</title>
+<link rel="stylesheet" href="./css/hud.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
 </head>
 <body>
-<canvas id="game" aria-label="Block Dodger: move the paddle left and right to dodge falling blocks and catch coins"></canvas>
-<p id="status" role="status" aria-live="polite"></p>
-<script type="module" src="./src/main.js"></script>
+<canvas id="game-canvas"></canvas>
+<div id="hud" class="hidden">
+  <div id="top-left">
+    <div id="money-label">$0</div>
+    <div id="wanted-stars"></div>
+    <div id="clock-label">Day 1 · 09:00</div>
+  </div>
+  <div id="mission-box">
+    <div id="mission-title">Free Roam</div>
+    <div id="mission-objective">Explore Palmira Bay</div>
+    <div id="mission-distance"></div>
+  </div>
+  <div id="bottom-left">
+    <div id="health-bar-wrap"><div id="health-bar"></div></div>
+    <div id="vehicle-label"></div>
+    <div id="speed-label"></div>
+  </div>
+  <canvas id="minimap" width="190" height="190"></canvas>
+  <div id="prompt-label"></div>
+  <div id="toast-label"></div>
+  <div id="damage-vignette"></div>
+</div>
+<div id="dialog-box" class="hidden">
+  <div id="dialog-speaker">Mara</div>
+  <div id="dialog-text"></div>
+  <div id="dialog-hint">Press Enter / click to continue</div>
+</div>
+<div id="start-screen">
+  <h1 id="game-title">NEON TIDE</h1>
+  <p id="game-subtitle">PALMIRA BAY</p>
+  <p id="story-intro">You are Rio Vale, a bike courier with empty pockets in a sun-drenched port city. Smuggler-queen Mara Sol hires you for one small delivery. One job becomes five, the bay police take notice, and by sunset you will either own the tide — or be washed out by it.</p>
+  <button id="btn-start">▶ &nbsp;NEW STORY</button>
+  <button id="btn-continue">CONTINUE SAVED GAME</button>
+  <button id="btn-help">CONTROLS &amp; HELP</button>
+  <p id="start-controls">WASD move · E enter car · F / Click punch &amp; shoot · Shift run · Space handbrake · Esc pause</p>
+</div>
+<div id="help-screen" class="hidden">
+  <h2 id="help-title">How to play Neon Tide</h2>
+  <p id="help-body">WASD / Arrows — move or drive. E — steal / enter / exit a car. F or mouse click — punch, hold near a car to shoot while driving is automatic aim. Shift — sprint. Space — handbrake. H — horn. Esc / P — pause. Follow the gold marker on the world and the minimap. Crimes raise your wanted stars; hide away from police sight to cool down. Finish all 5 story missions to beat the story.</p>
+  <button id="btn-help-back">BACK</button>
+</div>
+<div id="pause-screen" class="hidden">
+  <h2 id="pause-title">PAUSED</h2>
+  <button id="btn-resume">RESUME</button>
+  <button id="btn-save">SAVE GAME</button>
+  <button id="btn-restart">RESTART STORY</button>
+</div>
+<div id="end-screen" class="hidden">
+  <h2 id="end-title">BUSTED</h2>
+  <p id="end-text"></p>
+  <button id="btn-respawn">RESPAWN</button>
+</div>
+<script type="module" src="./js/main.js"></script>
 </body>
 </html>
