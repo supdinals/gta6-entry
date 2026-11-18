@@ -164,31 +164,36 @@ function activeAngle() { return G.inCar ? G.inCar.angle : player.angle; }
 function stageShot(mode) {
   startStory(false);
   dialog.hide(); missions.phase = 'active';
+  // Let the world settle first, then place the scene, so nothing drifts into a wall before the render.
+  for (let i = 0; i < 30; i++) stepGame(1 / 30, true);
   if (mode === 'chase') {
-    missions.index = 2; missions.setMarker(PLACES.hideout); wanted.setLocked(0); wanted.heat = 72; wanted.recalc();
-    const v = traffic.parked[0]; v.pos.set(8, 0, 28); v.angle = 0.2; enterCar(v); v.speed = 19;
-    player.pos.set(8, 0, 28);
-    police.spawn({ x: 2, z: 12 }); police.spawn({ x: 14, z: 8 }); police.spawn({ x: 6, z: -2 });
-    for (const c of police.cars) { c.pos.x = 8 + (Math.random() - 0.5) * 14; c.pos.z = 28 - 12 - Math.random() * 8; c.angle = 0.2; c.speed = 17; }
+    missions.index = 2; missions.setMarker(PLACES.hideout); wanted.heat = 72; wanted.recalc();
+    const v = traffic.parked[0]; v.pos.set(3.4, 0, 16); v.angle = 0; enterCar(v); v.speed = 13;
+    player.pos.set(3.4, 0, 16);
+    police.spawn({ x: 0, z: 0 }); police.spawn({ x: 0, z: 0 }); police.spawn({ x: 0, z: 0 }); police.spawn({ x: 0, z: 0 });
+    police.cars.forEach((c, i) => { c.pos.set(-3.5 + (i % 2) * 7, 0, 7 - Math.floor(i / 2) * 10 - (i % 2) * 3); c.angle = 0; c.speed = 12; });
     hud.toast('PBPD IN PURSUIT!', 9);
   } else if (mode === 'walk') {
     missions.index = 0; missions.setMarker(PLACES.cafe);
-    player.pos.set(18, 0, -18); player.angle = 2.6;
-    peds.peds.forEach((p, i) => { if (i < 9) { p.pos.set(10 + i * 2.4, 0, -26 + (i % 3) * 7); } });
+    player.pos.set(16, 0, -25); player.angle = 2.4;
+    peds.peds.forEach((p, i) => { if (i < 9) { p.pos.set(9 + i * 2.6, 0, -27 + (i % 3) * 6); } });
+    const t = traffic.cars[1]; t.pos.set(40, 0, -35.4); t.angle = Math.PI / 2; t.speed = 7; t.cruiseSpeed = 7;
+    t.target = { x: 64, z: -35.4 };
   } else if (mode === 'drive') {
     missions.index = 1; missions.setMarker(PLACES.marina);
-    const v = traffic.parked[2]; v.pos.set(96, 0, 163); v.angle = Math.PI / 2; enterCar(v); wanted.clear(); v.speed = 16;
+    const v = traffic.parked[2]; v.pos.set(96, 0, 163.4); v.angle = Math.PI / 2; enterCar(v); wanted.clear(); v.speed = 14;
   } else if (mode === 'mission') {
     missions.index = 0; missions.setMarker(PLACES.cafe);
-    player.pos.set(46, 0, -20); player.angle = 1.1;
+    player.pos.set(48, 0, -14); player.angle = 0.9;
     dialog.show([['Mara Sol', 'The crate goes to Cafe Brisa, Rio — gold marker, east side. Do not open it, do not be late.'],
                   ['Rio Vale', 'Cafe Brisa. Gold marker on my map. On my way.']]);
   }
-  // Settle camera behind the subject instantly.
+  // Settle camera behind the subject instantly, run a few frames so police and traffic are mid-motion.
   const p = activePos(); chaseCam.angle = activeAngle();
   chaseCam.pos.set(p.x - Math.sin(chaseCam.angle) * 10, 5, p.z - Math.cos(chaseCam.angle) * 10);
-  for (let i = 0; i < 40; i++) stepGame(1 / 30, true);
+  for (let i = 0; i < 7; i++) stepGame(1 / 30, true);
   renderer.render(scene, camera);
+  G.shotFrozen = true;
   window.__shotReady = true;
 }
 
@@ -269,7 +274,7 @@ function stepGame(dt, staging = false) {
 
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (!G.paused) stepGame(dt);
+  if (!G.paused && !G.shotFrozen) stepGame(dt);
   renderer.render(scene, camera);
   input.endFrame();
   requestAnimationFrame(loop);
