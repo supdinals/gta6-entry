@@ -30,6 +30,38 @@ export function roadWaypoints() {
   for (const x of CITY.xs) for (const z of CITY.zs) pts.push({ x, z });
   return pts;
 }
+// Zebra crossings at every intersection, described as flat bands just outside
+// the junction box. Each band crosses one road: 'across-x' bands sit north and
+// south of the junction and are walked in the x direction, 'across-z' bands
+// sit east and west and are walked in the z direction. buildings.js turns
+// each band into one striped plane, so this stays pure layout data.
+export function intersectionCrosswalks() {
+  const bands = [];
+  const off = CITY.roadHalf + 2.5;
+  for (const x of CITY.xs) for (const z of CITY.zs) {
+    bands.push({ x, z: z - off, w: 13, d: 5.6, axis: 'across-x' });
+    bands.push({ x, z: z + off, w: 13, d: 5.6, axis: 'across-x' });
+    bands.push({ x: x - off, z, w: 5.6, d: 13, axis: 'across-z' });
+    bands.push({ x: x + off, z, w: 5.6, d: 13, axis: 'across-z' });
+  }
+  return bands;
+}
+// Solid edge lines for every road, one along each kerb. Returned as thin flat
+// strips in world space so the renderer can lay them straight onto the road
+// surface without re-deriving the grid geometry.
+export function roadEdgeLines() {
+  const lines = [];
+  const inset = 6.7;
+  for (const z of CITY.zs) {
+    lines.push({ x: 0, z: z - inset, w: 470, d: 0.35 });
+    lines.push({ x: 0, z: z + inset, w: 470, d: 0.35 });
+  }
+  for (const x of CITY.xs) {
+    lines.push({ x: x - inset, z: -8, w: 0.35, d: 380 });
+    lines.push({ x: x + inset, z: -8, w: 0.35, d: 380 });
+  }
+  return lines;
+}
 export function nextGridPoint(x, z, dirX, dirZ) {
   // Move to the next intersection along the current driving direction.
   let nx = x, nz = z;

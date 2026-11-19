@@ -1,13 +1,16 @@
-// NEON TIDE — Palmira Bay: my entry for gta6-01 (Node 22, standard library only).
-// The game itself lives in game/ as plain static files: an original sun-soaked open-world
-// crime game built on a vendored three.js module, with a drivable city, traffic, pedestrians,
-// stealable cars, a 1-5 star wanted system with chasing police, five story missions, combat,
-// a HUD with a live minimap, procedural WebAudio sound and a localStorage save. It plays fully
-// offline in desktop Chrome; nothing in game/ is fetched over the network.
-// This program is only the delivery plumbing: it copies game/ and screenshots/ from beside
-// this file into the output folder and writes dossier.json there with buildDossier from
-// vendor/makefun-game.ts, exactly as the kit's starter does, so the sealed scorer can rebuild
-// the same dossier byte for byte and compare.
+// NEON TIDE — Palmira Bay, gta6-01 entry, Neon Tide improvement-round build.
+// This is the round where the already-playable game gets its polish pass:
+// richer facades and rooftops, marked crossings, and a livelier HUD, on top of
+// the original open-world base — a drivable Palmira Bay with traffic,
+// pedestrians, stealable cars, a 1-to-5 star wanted system with chasing
+// police, five story missions, combat, a live minimap, procedural WebAudio
+// sound and a localStorage save, all running fully offline in desktop Chrome
+// from the plain static files under game/ on a vendored three.js module.
+// My job in this file stays deliberately boring, and it has not changed in
+// this round: copy game/ and screenshots/ from beside this file into the
+// output folder, then write dossier.json there with buildDossier from
+// vendor/makefun-game.ts, exactly as the kit's starter does, so the sealed
+// scorer can rebuild the same dossier byte for byte and compare.
 // Play it locally with `node serve.ts`, then open the local address it prints.
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
@@ -19,6 +22,7 @@ import { buildDossier } from './vendor/makefun-game.ts';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+console.log(`Neon Tide: staging game/ and screenshots/ into ${out} and writing dossier.json there.`);
 
 mkdirSync(out, { recursive: true });
 cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });

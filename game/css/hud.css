@@ -6,7 +6,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #79c7e8; fon
 #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
 #top-left { position: absolute; top: 14px; left: 16px; text-shadow: 0 2px 6px rgba(0,0,0,.55); }
 #money-label { color: #ffe45e; font-size: 30px; font-weight: 900; letter-spacing: 1px; }
-#wanted-stars { color: #ffd21f; font-size: 28px; letter-spacing: 3px; min-height: 32px; text-shadow: 0 0 8px rgba(255,160,0,.8); }
+#wanted-stars { color: #ffd21f; font-size: 28px; letter-spacing: 3px; min-height: 32px; text-shadow: 0 0 8px rgba(255,160,0,.8); transform-origin: left center; animation: wanted-pulse 1.15s ease-in-out infinite; }
+/* The stars throb gently whenever any heat is on; hud.js still owns the hard
+   blink at 3+ stars through opacity, and the two combine without fighting
+   because this keyframe only touches scale and glow. */
+@keyframes wanted-pulse {
+  0%, 100% { transform: scale(1); text-shadow: 0 0 8px rgba(255,160,0,.8); }
+  50% { transform: scale(1.14); text-shadow: 0 0 16px rgba(255,64,40,.95), 0 0 6px rgba(255,210,31,.9); }
+}
+#wanted-stars:empty { animation: none; }
 #clock-label { color: #fff; font-size: 14px; font-weight: 700; opacity: .92; }
 #mission-box { position: absolute; top: 14px; right: 216px; max-width: 360px; background: rgba(8,24,38,.68); border-left: 5px solid #ffb300; border-radius: 8px; padding: 10px 14px; color: #fff; }
 #mission-title { font-weight: 900; font-size: 16px; color: #ffd54f; text-transform: uppercase; letter-spacing: .5px; }
@@ -20,7 +28,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #79c7e8; fon
 #minimap { position: absolute; right: 14px; top: 14px; width: 190px; height: 190px; border-radius: 50%; border: 3px solid rgba(255,255,255,.85); box-shadow: 0 4px 18px rgba(0,0,0,.45); background: #16324a; }
 #prompt-label { position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); background: rgba(0,0,0,.72); color: #ffe082; padding: 8px 18px; border-radius: 20px; font-weight: 800; font-size: 15px; }
 #prompt-label:empty { display: none; }
-#toast-label { position: absolute; left: 50%; top: 122px; transform: translateX(-50%); color: #fff; background: rgba(255,143,0,.92); padding: 9px 22px; border-radius: 8px; font-weight: 900; font-size: 18px; opacity: 0; transition: opacity .3s; }
+#toast-label { position: absolute; left: 50%; top: 122px; transform: translateX(-50%); color: #fff; background: linear-gradient(180deg, rgba(255,167,38,.96), rgba(239,108,0,.96)); border: 1px solid rgba(255,255,255,.55); box-shadow: 0 6px 20px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.35); padding: 10px 24px; border-radius: 999px; font-weight: 900; font-size: 18px; letter-spacing: .4px; text-shadow: 0 1px 3px rgba(0,0,0,.35); white-space: nowrap; opacity: 0; transition: opacity .3s ease; }
+#toast-label:empty { display: none; }
 #damage-vignette { position: absolute; inset: 0; box-shadow: inset 0 0 90px rgba(255,0,0,0); pointer-events: none; }
 #dialog-box { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); width: min(680px, 92vw); background: rgba(6,18,30,.9); border: 2px solid #ffb300; border-radius: 12px; color: #fff; padding: 14px 18px; z-index: 9; cursor: pointer; }
 #dialog-speaker { color: #ffb300; font-weight: 900; font-size: 15px; text-transform: uppercase; }

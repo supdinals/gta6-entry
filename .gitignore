@@ -1,2 +1,14 @@
+# Build output from `node main.ts` — regenerated for scoring, never committed.
 out/
 out2/
+
+# Local tooling and scratch artefacts from developing the game.
+node_modules/
+*.log
+*.tmp
+
+# Editor and OS noise.
+.DS_Store
+Thumbs.db
+*.swp
+*~
