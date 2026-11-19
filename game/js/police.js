@@ -25,14 +25,21 @@ export class PoliceSystem {
       cop.angle += Math.max(-2.1 * dt, Math.min(2.1 * dt, da * 3 * dt));
       const topSpeed = 21 + wanted.stars * 2.4;
       const targetSpeed = dist > 6 ? topSpeed : 4;
+      cop.brakeOn = targetSpeed < cop.speed - 0.5;
       cop.speed += (targetSpeed - cop.speed) * Math.min(1, dt * 1.6);
       cop.pos.x += Math.sin(cop.angle) * cop.speed * dt;
       cop.pos.z += Math.cos(cop.angle) * cop.speed * dt;
       cop.pos.x = Math.max(-222, Math.min(222, cop.pos.x));
       cop.pos.z = Math.max(-190, Math.min(226, cop.pos.z));
       cop.syncMesh(dt);
-      const bar = cop.mesh.children.find((c) => c.name === 'lightbar');
-      if (bar) bar.material.color.setHex(Math.sin(this.flash) > 0 ? 0xff1744 : 0x2979ff);
+      // Strobe the light bar: the red and blue halves trade places every
+      // flash phase, one flaring bright while the other drops to a ember.
+      const lights = cop.mesh.userData.policeLights;
+      if (lights) {
+        const redPhase = Math.sin(this.flash) > 0;
+        lights.redMat.emissiveIntensity = redPhase ? 3.6 : 0.2;
+        lights.blueMat.emissiveIntensity = redPhase ? 0.2 : 3.6;
+      }
       // Ramming contact: slows and damages the player, builds the bust meter when the player is cornered.
       if (dist < 3.4) {
         cop.lastRam = (cop.lastRam || 0) + dt;

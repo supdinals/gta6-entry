@@ -24,11 +24,13 @@ export class PlayerOnFoot {
     this.mesh = createPlayerMesh(); scene.add(this.mesh);
     this.pos = this.mesh.position; this.pos.set(-178, 0, 146);
     this.angle = 0.6; this.health = 100; this.walkCycle = 0; this.punchTimer = 0; this.dead = false;
+    this.sprintBlend = 0;
   }
   update(dt, input, camAngle, colliders) {
     let mx = 0, mz = 0;
     const f = (input.up ? 1 : 0) - (input.down ? 1 : 0), s = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-    if (f || s) {
+    const moving = !!(f || s);
+    if (moving) {
       const sin = Math.sin(camAngle), cos = Math.cos(camAngle);
       mx = sin * f + cos * s; mz = cos * f - sin * s;
       const len = Math.hypot(mx, mz) || 1; mx /= len; mz /= len;
@@ -37,13 +39,23 @@ export class PlayerOnFoot {
       this.pos.x += mx * speed * dt; this.pos.z += mz * speed * dt;
       this.walkCycle += dt * (input.run ? 13 : 9);
     } else this.walkCycle *= 0.8;
+    // Sprinting eases in and out through a blend, so the bigger animation
+    // never snaps on the frame Shift goes down or comes back up.
+    const sprintTarget = moving && input.run ? 1 : 0;
+    this.sprintBlend += (sprintTarget - this.sprintBlend) * Math.min(1, dt * 7);
     clampToCity(this.pos); resolveCollisions(this.pos, 0.7, colliders);
     this.mesh.rotation.y = this.angle;
-    const sw = Math.sin(this.walkCycle) * 0.55, u = this.mesh.userData;
-    u.legL.rotation.x = sw; u.legR.rotation.x = -sw;
+    // At a sprint the arms pump much wider than the legs, the body leans
+    // into the run and the bob gets springier; walking keeps the old gait.
+    const b = this.sprintBlend;
+    const legSwing = Math.sin(this.walkCycle) * (0.55 + 0.3 * b);
+    const armSwing = Math.sin(this.walkCycle) * (0.55 + 0.55 * b);
+    const u = this.mesh.userData;
+    u.legL.rotation.x = legSwing; u.legR.rotation.x = -legSwing;
     if (this.punchTimer > 0) { this.punchTimer -= dt; u.armR.rotation.x = -1.9 * Math.sin(Math.min(1, this.punchTimer / 0.28) * Math.PI); }
-    else { u.armL.rotation.x = -sw; u.armR.rotation.x = sw; }
-    this.mesh.position.y = Math.abs(Math.sin(this.walkCycle)) * 0.06;
+    else { u.armL.rotation.x = -armSwing; u.armR.rotation.x = armSwing; }
+    this.mesh.rotation.x = 0.13 * b;
+    this.mesh.position.y = Math.abs(Math.sin(this.walkCycle)) * (0.06 + 0.05 * b);
   }
   punch() { this.punchTimer = 0.28; }
   hurt(amount) { this.health = Math.max(0, this.health - amount); return this.health <= 0; }

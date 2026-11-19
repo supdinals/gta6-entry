@@ -33,6 +33,29 @@ export class TrafficSystem {
     });
   }
   allDrivable() { return [...this.cars, ...this.parked]; }
+  // A short two-tone horn from this system's own tiny synth. Traffic owns no
+  // audio graph in main.js, so it lazily builds one quiet context on the
+  // first honk and reuses it; if the browser refuses, it simply stays silent.
+  honk(v) {
+    try {
+      if (!this.hornCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        this.hornCtx = new AC();
+        this.hornGain = this.hornCtx.createGain(); this.hornGain.gain.value = 0.1;
+        this.hornGain.connect(this.hornCtx.destination);
+      }
+      if (this.hornCtx.state === 'suspended') this.hornCtx.resume();
+      for (const freq of [370, 466]) {
+        const o = this.hornCtx.createOscillator(), g = this.hornCtx.createGain();
+        o.type = 'square'; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.5, this.hornCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, this.hornCtx.currentTime + 0.28);
+        o.connect(g); g.connect(this.hornGain); o.start(); o.stop(this.hornCtx.currentTime + 0.28);
+      }
+      v.honkFlash = 0.3;
+    } catch { /* no audio available: the honk is skipped, never an error */ }
+  }
   update(dt, playerPos) {
     for (const v of this.cars) {
       if (v.driver === 'player') continue;
@@ -49,19 +72,46 @@ export class TrafficSystem {
       let da = ((v.desiredAngle - v.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
       v.angle += Math.max(-1.6 * dt, Math.min(1.6 * dt, da * 2.2 * dt + Math.sign(da) * 0.001));
       let speed = v.cruiseSpeed;
-      // Slow down if another car or the player is right ahead.
+      // Following distance grows with speed: the car starts easing off early
+      // and matches the leader's pace instead of braking late and hard.
+      const followGap = 6 + Math.abs(v.speed) * 0.9;
       for (const o of this.cars) {
         if (o === v) continue;
         const ox = o.pos.x - v.pos.x, oz = o.pos.z - v.pos.z;
         const ahead = ox * Math.sin(v.angle) + oz * Math.cos(v.angle);
-        if (ahead > 0 && ahead < 9 && Math.abs(ox * Math.cos(v.angle) - oz * Math.sin(v.angle)) < 2.4) speed = Math.min(speed, 3);
+        const lateral = Math.abs(ox * Math.cos(v.angle) - oz * Math.sin(v.angle));
+        if (ahead > 0 && ahead < followGap && lateral < 2.4) {
+          const leaderPace = Math.abs(o.speed || 0) + Math.max(0, ahead - 5) * 0.7;
+          speed = Math.min(speed, Math.max(0, leaderPace));
+        }
       }
+      let blockedByPlayer = false;
       if (playerPos) {
         const px = playerPos.x - v.pos.x, pz = playerPos.z - v.pos.z;
         const ahead = px * Math.sin(v.angle) + pz * Math.cos(v.angle);
-        if (ahead > 0 && ahead < 7 && Math.abs(px) + Math.abs(pz) < 9) speed = 0;
+        const lateral = Math.abs(px * Math.cos(v.angle) - pz * Math.sin(v.angle));
+        const playerGap = 5 + Math.abs(v.speed) * 0.7;
+        if (ahead > 0 && ahead < playerGap && lateral < 2.6) {
+          // Ease to a stop behind the player; only a full stop at bumper range.
+          speed = ahead < 3.6 ? 0 : Math.min(speed, (ahead - 3.4) * 1.1);
+          blockedByPlayer = speed < v.cruiseSpeed * 0.5;
+        }
       }
-      v.speed += (speed - v.speed) * Math.min(1, dt * 2);
+      // A short honk when the player has held this car up for a while, with a
+      // per-car cooldown so a jam never turns into a chorus.
+      v.blockedTime = blockedByPlayer && Math.abs(v.speed) < 1.2 ? (v.blockedTime || 0) + dt : 0;
+      v.honkCooldown = Math.max(0, (v.honkCooldown || 0) - dt);
+      if (v.blockedTime > 1.6 && v.honkCooldown <= 0) {
+        v.honkCooldown = 4; v.blockedTime = 0;
+        if (playerPos && Math.hypot(playerPos.x - v.pos.x, playerPos.z - v.pos.z) < 20) this.honk(v);
+      }
+      if (v.honkFlash > 0) v.honkFlash -= dt;
+      // Approach the target speed with capped acceleration and gentler,
+      // earlier braking, and light the brake lamps while shedding speed.
+      v.brakeOn = speed < v.speed - 0.4;
+      const delta = speed - v.speed;
+      const maxDelta = (delta < 0 ? 7.5 : 4.2) * dt;
+      v.speed += Math.max(-maxDelta, Math.min(maxDelta, delta));
       v.pos.x += Math.sin(v.angle) * v.speed * dt;
       v.pos.z += Math.cos(v.angle) * v.speed * dt;
       v.syncMesh(dt);
