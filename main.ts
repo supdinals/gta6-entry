@@ -15,7 +15,7 @@
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
@@ -26,8 +26,24 @@ console.log(`Neon Tide: staging game/ and screenshots/ into ${out} and writing d
 
 mkdirSync(out, { recursive: true });
 cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });
+// Screenshots go over one file at a time in filename order, so the staged
+// set is deterministic no matter what order the filesystem hands them back:
+// the cover first, then the walk, the coastal drive and the mission shot.
+// The dossier only records file names and contents, and the names were
+// already alphabetical, so this reordering changes no byte of dossier.json.
+const shotsDir = join(here, 'screenshots');
 mkdirSync(join(out, 'screenshots'), { recursive: true });
-if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+let shotCount = 0, shotBytes = 0;
+if (existsSync(shotsDir)) {
+  for (const name of readdirSync(shotsDir).sort()) {
+    const from = join(shotsDir, name);
+    if (!statSync(from).isFile()) continue;
+    copyFileSync(from, join(out, 'screenshots', name));
+    shotCount++;
+    shotBytes += statSync(from).size;
+  }
+}
+console.log(`Neon Tide: staged ${shotCount} screenshots (${shotBytes} bytes) into ${out}.`);
 
 // The scorer's own caps (reference/gate.json): only text_max_bytes shapes the bytes; the others refuse an entry the
 // scorer would refuse (more than 4 screenshots or one over 256 KiB; more than 993 files in game/ or 48 MiB of game

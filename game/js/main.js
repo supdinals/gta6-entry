@@ -205,6 +205,22 @@ function stageShot(mode) {
   const p = activePos(); chaseCam.angle = activeAngle();
   chaseCam.pos.set(p.x - Math.sin(chaseCam.angle) * 10, 5, p.z - Math.cos(chaseCam.angle) * 10);
   for (let i = 0; i < 7; i++) stepGame(1 / 30, true);
+  // Snap the damped camera to its target: seven settle steps cannot drag
+  // the look-at point across the map after a teleport, so without this the
+  // staged shot faces the camera's previous location (the depot corner) and
+  // the subject ends up behind the lens — the drive shot came out facing
+  // backwards and the walk shot lost the player and the pedestrians.
+  chaseCam.angle = activeAngle();
+  chaseCam.lookPos.set(p.x, p.y + 1.6, p.z);
+  const snapDist = G.inCar ? 10.5 + Math.abs(playerSpeedValue()) * 0.16 : 7.5;
+  const snapHeight = G.inCar ? 3.6 : 3.1;
+  chaseCam.pos.set(
+    p.x - Math.sin(chaseCam.angle) * Math.cos(chaseCam.pitch) * snapDist,
+    p.y + snapHeight + Math.sin(chaseCam.pitch) * snapDist * 0.55,
+    p.z - Math.cos(chaseCam.angle) * Math.cos(chaseCam.pitch) * snapDist,
+  );
+  camera.position.copy(chaseCam.pos);
+  camera.lookAt(chaseCam.lookPos);
   renderer.render(scene, camera);
   G.shotFrozen = true;
   window.__shotReady = true;

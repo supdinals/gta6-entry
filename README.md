@@ -32,6 +32,27 @@ for this game. No names, logos, characters, maps or assets from any commercial g
 - The only library is **three.js**, vendored as a minified module under `game/vendor/`;
   everything else is hand-written ES modules, one job per file, no build step, no network.
 
+## Round 2 improvements
+
+A polish pass on the finished game, in four stages:
+
+- **City and streets** — richer building facades with varied windows, rooftop
+  details and awnings, marked zebra crossings and kerb edge lines on every
+  road, and a tidier HUD.
+- **Motion and chase feel** — wheels that visibly roll, brake lights, a
+  strobing red-and-blue police light bar, traffic that honks when held up,
+  more varied pedestrians, a livelier sprint, and a damped chase camera that
+  widens its view with speed.
+- **Missions and feedback** — a pulsing gold mission beacon with an arrival
+  chime, dialog that types out line by line, hit flashes with knockback, a
+  wanted level that cools down when you break line of sight, coastline detail
+  on the minimap, a procedural music loop (M to mute), a low-health vignette,
+  a versioned save, auto-pause when the tab hides, and a loading progress label.
+- **Screenshots retaken** — all four shots re-rendered from the polished game,
+  with the staged camera snapped onto its subject so the chase, walk, coastal
+  drive and mission frames all show the player, the police and the mission
+  instead of the camera's previous position.
+
 ## Controls
 
 | Key | Action |
