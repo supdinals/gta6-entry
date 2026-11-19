@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="NEON TIDE — Palmira Bay: an original open-world crime game in the browser. Drive, steal cars, outrun the PBPD through a 1–5 star wanted system, and finish five story missions in a sun-soaked coastal city. Fully offline, no downloads.">
 <title>NEON TIDE — Palmira Bay</title>
 <link rel="stylesheet" href="./css/hud.css">
 <script type="importmap">
@@ -10,6 +11,7 @@
 </script>
 </head>
 <body>
+<div id="loading-label" style="position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:#79c7e8;color:#06283d;font-family:'Trebuchet MS',Verdana,system-ui,sans-serif;font-size:19px;font-weight:900;letter-spacing:.5px;text-align:center;padding:24px;">Loading Palmira Bay — building streets, towers and traffic…</div>
 <canvas id="game-canvas"></canvas>
 <div id="hud" class="hidden">
   <div id="top-left">
@@ -45,6 +47,12 @@
   <button id="btn-continue">CONTINUE SAVED GAME</button>
   <button id="btn-help">CONTROLS &amp; HELP</button>
   <p id="start-controls">WASD move · E enter car · F / Click punch &amp; shoot · Shift run · Space handbrake · Esc pause</p>
+  <ul id="start-controls-list" style="list-style:none;margin:10px 0 0;padding:0;font-size:13px;line-height:1.65;opacity:.92;">
+    <li><strong>WASD / Arrows</strong> — move or drive</li>
+    <li><strong>E</strong> — enter / exit a car &nbsp;·&nbsp; <strong>F / Click</strong> — punch, shoot with Shift</li>
+    <li><strong>Shift</strong> — sprint &nbsp;·&nbsp; <strong>Space</strong> — handbrake &nbsp;·&nbsp; <strong>H</strong> — horn</li>
+    <li><strong>M</strong> — mute all sound &nbsp;·&nbsp; <strong>Esc / P</strong> — pause</li>
+  </ul>
 </div>
 <div id="help-screen" class="hidden">
   <h2 id="help-title">How to play Neon Tide</h2>

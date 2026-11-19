@@ -19,6 +19,12 @@ import { saveGame, loadGame, clearSave, hasSave } from './save-game.js';
 
 const params = new URLSearchParams(location.search);
 const shotMode = params.get('shot');
+// Loading progress, in plain words on the loading screen: the heavy work
+// below is synchronous, so each stage names itself as it finishes and the
+// label is lifted once the first frame is on its way.
+const loadingLabel = document.getElementById('loading-label');
+const setLoading = (text) => { if (loadingLabel) loadingLabel.textContent = text; };
+setLoading('Loading Palmira Bay — building streets, towers and traffic…');
 const canvas = document.getElementById('game-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
@@ -38,6 +44,7 @@ sun.shadow.camera.far = 420;
 scene.add(sun); scene.add(sun.target);
 scene.add(new THREE.HemisphereLight(0xbfe8ff, 0xffe0a3, 0.95));
 const colliders = buildCity(scene);
+setLoading('Palmira Bay built — wiring traffic, police and missions…');
 
 const input = createInput();
 const audio = new AudioSynth();
@@ -57,6 +64,7 @@ const G = {
   started: false, hitCooldown: 0,
 };
 const missions = new MissionSystem(scene, dialog, {
+  onArrive: () => { audio.arrive(); },
   onReward: (amount, m) => { G.money += amount; audio.missionDone(); hud.toast(`Mission passed! +$${amount} — ${m.title}`, 3.4); persist(); },
   onLockWanted: (stars) => { wanted.setLocked(stars); hud.toast('WANTED — lose the police!', 3); },
   onStart: (m) => { hud.toast(`Mission: ${m.title}`, 2.6); },
@@ -155,6 +163,11 @@ function togglePause(force) {
   G.paused = force !== undefined ? force : !G.paused;
   document.getElementById('pause-screen').classList.toggle('hidden', !G.paused);
 }
+// Switching tabs mid-chase pauses the game instead of letting the bay run
+// on without the player; coming back lands on the pause screen to resume.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && !shotMode && G.started && G.mode === 'play' && !G.paused) togglePause(true);
+});
 canvas.addEventListener('click', () => { if (G.mode === 'play' && !dialog.isOpen()) canvas.requestPointerLock && canvas.requestPointerLock(); });
 
 function playerSpeedValue() { return G.inCar ? Math.abs(G.inCar.speed) : 0; }
@@ -205,6 +218,7 @@ function stepGame(dt, staging = false) {
   if (scene.userData.sea) scene.userData.sea.position.y = -0.25 + Math.sin(performance.now() / 900) * 0.07;
   if (!staging && G.mode === 'play' && !G.paused) {
     if (input.wasPressed('Enter') && dialog.isOpen()) dialog.advance();
+    if (input.wasPressed('KeyM')) { const muted = audio.toggleMute(); hud.toast(muted ? 'Sound muted — press M to unmute' : 'Sound on', 1.6); }
     if ((input.wasPressed('Escape') || input.wasPressed('KeyP'))) togglePause();
     if (input.wasPressed('KeyH') && G.inCar) audio.horn();
     if (!dialog.isOpen() && !G.paused) {
@@ -300,4 +314,10 @@ window.NEONTIDE = {
 
 if (shotMode) stageShot(shotMode);
 else if (params.get('autostart')) startStory(false);
+setLoading('Palmira Bay is ready — welcome to Neon Tide.');
+if (loadingLabel) {
+  loadingLabel.style.transition = 'opacity .35s';
+  loadingLabel.style.opacity = '0';
+  setTimeout(() => { loadingLabel.style.display = 'none'; }, 380);
+}
 requestAnimationFrame(loop);

@@ -1,6 +1,6 @@
 // wanted.js — the wanted system: crimes add heat, heat becomes 1-5 stars, hiding from police cools it down.
 export class WantedSystem {
-  constructor() { this.heat = 0; this.stars = 0; this.locked = 0; this.seenTimer = 0; this.coolTimer = 0; }
+  constructor() { this.heat = 0; this.stars = 0; this.locked = 0; this.seenTimer = 0; this.coolTimer = 0; this.cooling = false; }
   addCrime(amount, label) {
     if (this.locked > 0) amount = Math.max(amount, 6);
     this.heat = Math.min(100, this.heat + amount);
@@ -15,13 +15,17 @@ export class WantedSystem {
   setLocked(stars) { this.locked = stars; this.heat = Math.max(this.heat, stars * 16); this.recalc(); }
   clearLock() { this.locked = 0; this.recalc(); }
   update(dt, isSeenByPolice) {
-    if (isSeenByPolice) { this.coolTimer = 0; this.seenTimer += dt; }
+    if (isSeenByPolice) { this.coolTimer = 0; this.seenTimer += dt; this.cooling = false; }
     else if (this.stars > 0 && this.locked === 0) {
       this.coolTimer += dt;
+      // Cooling is a real state the HUD can show: it only counts once the
+      // grace period has passed and heat is actually draining away.
+      this.cooling = this.coolTimer > 2.2 && this.heat > 0;
       if (this.coolTimer > 2.2) { this.heat = Math.max(0, this.heat - dt * 4.2); this.recalc(); }
-    }
+    } else this.cooling = false;
   }
-  clear() { this.heat = 0; this.stars = 0; this.locked = 0; this.coolTimer = 0; }
+  isCooling() { return this.cooling; }
+  clear() { this.heat = 0; this.stars = 0; this.locked = 0; this.coolTimer = 0; this.cooling = false; }
   starsText() { return '★'.repeat(this.stars) + '☆'.repeat(5 - this.stars); }
 }
 export const CRIMES = { stealCar: 22, hitCar: 10, hitPed: 26, punch: 12, shoot: 18, missionHeat: 30 };

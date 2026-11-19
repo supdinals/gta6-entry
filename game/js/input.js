@@ -2,10 +2,16 @@
 export function createInput() {
   const held = {}, pressed = {};
   let clicked = false;
+  // Keys the game owns outright. M is registered here too, as the mute
+  // toggle, so main.js can ask for it like any other game key.
+  const GAME_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'KeyF', 'KeyH', 'KeyM', 'KeyP'];
+  const NO_BROWSER_DEFAULT = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space']);
   const down = (e) => {
     if (!held[e.code]) pressed[e.code] = true;
     held[e.code] = true;
-    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+    // Space and the arrows would otherwise scroll the page mid-drive; the
+    // game takes them over completely so the view never jumps.
+    if (NO_BROWSER_DEFAULT.has(e.code)) e.preventDefault();
   };
   const up = (e) => { held[e.code] = false; };
   window.addEventListener('keydown', down);
@@ -20,6 +26,8 @@ export function createInput() {
     get right() { return !!(held.KeyD || held.ArrowRight); },
     get run() { return !!(held.ShiftLeft || held.ShiftRight); },
     get handbrake() { return !!held.Space; },
+    get mute() { return !!held.KeyM; },
+    isGameKey(code) { return GAME_KEYS.includes(code); },
     wasPressed(code) { return !!pressed[code]; },
     takeClick() { const c = clicked; clicked = false; return c; },
     endFrame() { for (const k in pressed) pressed[k] = false; clicked = false; },

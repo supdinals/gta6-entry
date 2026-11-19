@@ -52,7 +52,20 @@ export class MissionSystem {
   setMarker(place) { this.marker.position.set(place.x, 0, place.z); this.marker.visible = true; this.targetPos = place; }
   target() { return this.targetPos || null; }
   update(dt, playerPos, inCar) {
-    if (this.marker.visible) { this.marker.rotation.y += dt * 2; this.marker.children[0].position.y = 5 + Math.sin(performance.now() / 300) * 0.7; }
+    if (this.marker.visible) {
+      this.marker.rotation.y += dt * 2;
+      // The gold column breathes: opacity and width pulse together, the
+      // ground ring swells against it, and the arrow bobs above the beam.
+      const pulse = Math.sin(performance.now() / 300) * 0.5 + 0.5;
+      const u = this.marker.userData;
+      if (u.beam) {
+        u.beam.material.opacity = 0.26 + pulse * 0.22;
+        const swell = 1 + (pulse - 0.5) * 0.16;
+        u.beam.scale.set(swell, 1, swell);
+      }
+      if (u.ring) { const r = 1 + (pulse - 0.5) * 0.22; u.ring.scale.set(r, r, 1); }
+      if (u.arrow) u.arrow.position.y = 5 + Math.sin(performance.now() / 300) * 0.7;
+    }
     if (this.phase !== 'active') return null;
     const m = this.current(); if (!m) return null;
     const t = this.target(); if (!t) return null;
@@ -77,6 +90,9 @@ export class MissionSystem {
   complete() {
     const m = this.current();
     this.phase = 'outro'; this.marker.visible = false;
+    // Arrival chime first, so reaching the column has its own sound before
+    // the reward and outro dialog land on top of it.
+    if (this.hooks.onArrive) this.hooks.onArrive(m);
     if (this.hooks.onReward) this.hooks.onReward(m.reward, m);
     this.dialog.show(m.outro, () => {
       this.index++;
@@ -103,6 +119,7 @@ export function createMarker() {
   ring.rotation.x = Math.PI / 2; ring.position.y = 0.4; g.add(ring);
   const arrow = new THREE.Mesh(new THREE.ConeGeometry(1.1, 2.4, 4), new THREE.MeshBasicMaterial({ color: 0xffb300 }));
   arrow.rotation.x = Math.PI; arrow.position.y = 5; g.add(arrow);
+  g.userData = { beam, ring, arrow };
   g.visible = false;
   return g;
 }

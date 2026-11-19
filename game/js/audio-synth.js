@@ -1,6 +1,6 @@
 // audio-synth.js — all sound is synthesized live with WebAudio: engine hum, horn, siren, punches, shots and jingles.
 export class AudioSynth {
-  constructor() { this.ctx = null; this.engineOsc = null; this.engineGain = null; this.sirenTimer = 0; this.master = null; }
+  constructor() { this.ctx = null; this.engineOsc = null; this.engineGain = null; this.sirenTimer = 0; this.master = null; this.muted = false; this.musicTimer = null; this.chordIndex = 0; }
   ensure() {
     if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
     try {
@@ -11,8 +11,35 @@ export class AudioSynth {
       this.engineGain = this.ctx.createGain(); this.engineGain.gain.value = 0;
       this.engineOsc.connect(filter); filter.connect(this.engineGain); this.engineGain.connect(this.master);
       this.engineOsc.start();
+      this.startMusic();
     } catch { this.ctx = null; }
   }
+  // A soft procedural backdrop: a slow four-chord pad loop (Cmaj7, Am7,
+  // Fmaj7, G6) played as long quiet triangle tones under everything else.
+  startMusic() {
+    if (this.musicTimer || !this.ctx) return;
+    const chords = [
+      [261.63, 329.63, 392.0, 493.88],
+      [220.0, 261.63, 329.63, 392.0],
+      [174.61, 220.0, 261.63, 329.63],
+      [196.0, 246.94, 293.66, 392.0],
+    ];
+    const playChord = () => {
+      if (!this.ctx || this.muted) return;
+      for (const f of chords[this.chordIndex % chords.length]) this.tone(f, 2.6, 'triangle', 0.035);
+      this.chordIndex++;
+    };
+    playChord();
+    this.musicTimer = setInterval(playChord, 2600);
+  }
+  // M is the master mute: one gain node silences engine, effects and music
+  // together, and toggling it back restores the previous level exactly.
+  toggleMute() {
+    this.muted = !this.muted;
+    if (this.master) this.master.gain.value = this.muted ? 0 : 0.5;
+    return this.muted;
+  }
+  arrive() { this.tone(783.99, 0.16, 'triangle', 0.22); setTimeout(() => this.tone(1046.5, 0.3, 'triangle', 0.22), 110); }
   tone(freq, dur, type = 'sine', vol = 0.25, slide = 0) {
     if (!this.ctx) return;
     const o = this.ctx.createOscillator(), g = this.ctx.createGain();
